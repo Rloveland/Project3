@@ -29,7 +29,10 @@ public class SummaryLVActivity extends AppCompatActivity {
         //
         setContentView(R.layout.person_list_lv);
         mSummaryView = findViewById(R.id.summary_list_id);
-        ad = new SummaryListAdapter();
+        if(new PersonDB(this).getPersonList().isEmpty())
+            new PersonDB(this).createPersonObjects();
+        new PersonDB(this).retrievePersonObjects();
+        ad = new SummaryListAdapter(this);
         mSummaryView.setAdapter(ad);
 
     }
@@ -50,7 +53,7 @@ public class SummaryLVActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         Log.d(TAG, "onStart() called");
-        ad.notifyDataSetChanged();
+        ad.notifyDataSetChanged(this);
         super.onStart();
     }
 
@@ -83,7 +86,7 @@ public class SummaryLVActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         //go to persondetails and edit
         Intent intent = new Intent(SummaryLVActivity.this, PersonDetailsActivity.class);
-        intent.putExtra("PersonIndex", PersonDB.getInstance().getPersonList().size());
+        intent.putExtra("PersonIndex", new PersonDB(this).getPersonList().size());
         startActivity(intent);
         return super.onOptionsItemSelected(item);
     }

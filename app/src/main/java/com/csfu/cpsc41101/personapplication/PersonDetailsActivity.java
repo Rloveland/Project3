@@ -21,6 +21,8 @@ import com.csfu.cpsc41101.personapplication.model.CourseEnrollment;
 import com.csfu.cpsc41101.personapplication.model.Person;
 import com.csfu.cpsc41101.personapplication.model.PersonDB;
 
+import java.util.ArrayList;
+
 public class PersonDetailsActivity extends AppCompatActivity {
 
     protected Menu detailMenu;
@@ -43,48 +45,36 @@ public class PersonDetailsActivity extends AppCompatActivity {
         Button but = findViewById(R.id.add_course);
         isNew=false;
         //if add new person
-        if(personIndx == PersonDB.getInstance().getPersonList().size()) {
+        if(personIndx == new PersonDB(this).getPersonList().size()) {
             pObj = new Person("", "", 0);
-            PersonDB.getInstance().getPersonList().add(pObj);
+            new PersonDB(this).insertPerson(pObj);
             but.setVisibility(View.VISIBLE);
             isNew = true;
             isDone = false;
         }
         else
-            pObj = PersonDB.getInstance().getPersonList().get(personIndx);
-            //
-            EditText editView = findViewById(R.id.p_first_name_id);
-            editView.setText(pObj.getFirstName());
-            editView.setEnabled(isNew);
-            editView = findViewById(R.id.p_last_name_id);
-            editView.setText(pObj.getLastName());
-            editView.setEnabled(isNew);
-            editView = findViewById(R.id.p_cwid_id);
-            editView.setText(pObj.getCWID() + "");
-            editView.setEnabled(isNew);
+            pObj = new PersonDB(this).getPersonList().get(personIndx);
+        //
+        EditText editView = findViewById(R.id.p_first_name_id);
+        editView.setText(pObj.getFirstName());
+        editView.setEnabled(isNew);
+        editView = findViewById(R.id.p_last_name_id);
+        editView.setText(pObj.getLastName());
+        editView.setEnabled(isNew);
+        editView = findViewById(R.id.p_cwid_id);
+        editView.setText(pObj.getCWID() + "");
+        editView.setEnabled(isNew);
 
         mCourseTable = findViewById(R.id.course_table);
-        ad = new PersonDetailsAdapter(personIndx);
+        ad = new PersonDetailsAdapter(personIndx, this);
         mCourseTable.setAdapter(ad);
 
         but.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Page Navigation
-                View v;
-                EditText et, et2;
-
-                int listLength = mCourseTable.getChildCount();
-                for (int i = 0; i < listLength; i++)
-                {
-                    v = mCourseTable.getChildAt(i);
-                    et = (EditText) v.findViewById(R.id.course_id);
-                    et2 = (EditText) v.findViewById(R.id.grade);
-                    PersonDB.getInstance().getPersonList().get(personIndx).getCourseEnrollments().get(i).setCourseID(et.getText().toString());
-                    PersonDB.getInstance().getPersonList().get(personIndx).getCourseEnrollments().get(i).setGrade(et2.getText().toString());
-                }
-                PersonDB.getInstance().getPersonList().get(personIndx).getCourseEnrollments().add(new CourseEnrollment("",""));
-                ad.notifyDataSetChanged(true);
+                saveData(true);
+                ad.notifyDataSetChanged(true, PersonDetailsActivity.this);
             }
         });
 
@@ -98,8 +88,8 @@ public class PersonDetailsActivity extends AppCompatActivity {
             menu.findItem(R.id.action_edit).setVisible(false);
             menu.findItem(R.id.action_done).setVisible(true);
         }else{
-        menu.findItem(R.id.action_edit).setVisible(true);
-        menu.findItem(R.id.action_done).setVisible(false);
+            menu.findItem(R.id.action_edit).setVisible(true);
+            menu.findItem(R.id.action_done).setVisible(false);
         }
         menu.findItem(R.id.action_add).setVisible(false);
         detailMenu = menu;
@@ -129,7 +119,7 @@ public class PersonDetailsActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         if(isNew && !isDone)
-            PersonDB.getInstance().getPersonList().remove(personIndx);
+            new PersonDB(this).getPersonList().remove(personIndx);
         Log.d(TAG, "onStop() called");
         super.onStop();
     }
@@ -166,39 +156,51 @@ public class PersonDetailsActivity extends AppCompatActivity {
             item.setVisible(false);
         } else if (item.getItemId() == R.id.action_done) {
             isDone = true;
-            EditText editView = findViewById(R.id.p_first_name_id);
-            PersonDB.getInstance().getPersonList().get(personIndx).setFirstName(editView.getText().toString());
-            editView.setEnabled(false);
-            editView = findViewById(R.id.p_last_name_id);
-            PersonDB.getInstance().getPersonList().get(personIndx).setLastName(editView.getText().toString());
-            editView.setEnabled(false);
-            editView = findViewById(R.id.p_cwid_id);
-            try{
-            PersonDB.getInstance().getPersonList().get(personIndx).setCWID(Integer.parseInt(editView.getText().toString()));
-            } catch (NumberFormatException nfe) {
-                PersonDB.getInstance().getPersonList().get(personIndx).setCWID(0);}
-            editView.setEnabled(false);
-            //
-            Button but = findViewById(R.id.add_course);
-            but.setVisibility(View.INVISIBLE);
-            //
-            EditText et, et2;
-            View v;
-            int listLength = mCourseTable.getChildCount();
-            for (int i = 0; i < listLength; i++)
-            {
-                v = mCourseTable.getChildAt(i);
-                et = (EditText) v.findViewById(R.id.course_id);
-                et2 = (EditText) v.findViewById(R.id.grade);
-                PersonDB.getInstance().getPersonList().get(personIndx).getCourseEnrollments().get(i).setCourseID(et.getText().toString());
-                PersonDB.getInstance().getPersonList().get(personIndx).getCourseEnrollments().get(i).setGrade(et2.getText().toString());
-                et.setEnabled(false);
-                et2.setEnabled(false);
-            }
+            saveData(false);
             //
             item.setVisible(false);
             detailMenu.findItem(R.id.action_edit).setVisible(true);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void saveData(Boolean isNewCourse){
+        EditText editView = findViewById(R.id.p_first_name_id);
+        Person pObj = new Person();
+        pObj.setFirstName(editView.getText().toString());
+        editView.setEnabled(isNewCourse);
+        editView = findViewById(R.id.p_last_name_id);
+        pObj.setLastName(editView.getText().toString());
+        editView.setEnabled(isNewCourse);
+        editView = findViewById(R.id.p_cwid_id);
+        try{
+            pObj.setCWID(Integer.parseInt(editView.getText().toString()));
+        } catch (NumberFormatException nfe) {
+            pObj.setCWID(0);}
+        editView.setEnabled(isNewCourse);
+        //
+        if(!isNewCourse) {
+            Button but = findViewById(R.id.add_course);
+            but.setVisibility(View.INVISIBLE);
+        }
+        //
+        EditText et, et2;
+        View v;
+        int listLength = mCourseTable.getChildCount();
+        ArrayList<CourseEnrollment> courses = new ArrayList<CourseEnrollment>();
+        for (int i = 0; i < listLength; i++)
+        {
+            v = mCourseTable.getChildAt(i);
+            et = (EditText) v.findViewById(R.id.course_id);
+            et2 = (EditText) v.findViewById(R.id.grade);
+            CourseEnrollment c = new CourseEnrollment(et.getText().toString(),et2.getText().toString(), pObj.getCWID());
+            courses.add(c);
+            et.setEnabled(isNewCourse);
+            et2.setEnabled(isNewCourse);
+        }
+        if(isNewCourse)
+            courses.add(new CourseEnrollment("","",0));
+        pObj.setCourseEnrollments(courses);
+        new PersonDB(this).editPerson(pObj, personIndx);
     }
 }

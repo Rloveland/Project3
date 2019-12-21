@@ -1,5 +1,6 @@
 package com.csfu.cpsc41101.personapplication.adapter;
 
+import android.content.Context;
 import android.content.Intent;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,11 +23,15 @@ import java.util.ArrayList;
 public class PersonDetailsAdapter extends BaseAdapter {
 
     protected ArrayList<CourseEnrollment> mCourses;
+    PersonDB mPersonDB;
     Boolean editing;
+    int mPersonIndex;
 
-    public PersonDetailsAdapter(int personIndex) {
-        mCourses = PersonDB.getInstance().getPersonList().get(personIndex).getCourseEnrollments();
+    public PersonDetailsAdapter(int personIndex, Context c) {
+        mPersonDB = new PersonDB(c);
+        mCourses = mPersonDB.getPersonList().get(personIndex).getCourseEnrollments();
         editing = false;
+        mPersonIndex=personIndex;
     }
 
     @Override
@@ -44,8 +49,9 @@ public class PersonDetailsAdapter extends BaseAdapter {
         return i;
     }
 
-    public void notifyDataSetChanged(Boolean ed) {
+    public void notifyDataSetChanged(Boolean ed, Context c) {
         editing = ed;
+        mCourses = new PersonDB(c).getPersonList().get(mPersonIndex).getCourseEnrollments();
         super.notifyDataSetChanged();
     }
 

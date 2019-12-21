@@ -1,5 +1,6 @@
 package com.csfu.cpsc41101.personapplication.adapter;
 
+import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,20 +14,33 @@ import com.csfu.cpsc41101.personapplication.R;
 import com.csfu.cpsc41101.personapplication.model.Person;
 import com.csfu.cpsc41101.personapplication.model.PersonDB;
 
+import java.util.ArrayList;
+
 public class SummaryListAdapter extends BaseAdapter {
+    ArrayList<Person> mPersonList;
+
+    public SummaryListAdapter(Context context) {
+        mPersonList = new PersonDB(context).getPersonList();
+    }
+
     @Override
     public int getCount() {
-        return PersonDB.getInstance().getPersonList().size();
+        return mPersonList.size();
     }
 
     @Override
     public Object getItem(int i) {
-        return PersonDB.getInstance().getPersonList().get(i);
+        return mPersonList.get(i);
     }
 
     @Override
     public long getItemId(int i) {
         return i;
+    }
+
+    public void notifyDataSetChanged(Context context){
+        mPersonList = new PersonDB(context).getPersonList();
+        super.notifyDataSetChanged();
     }
 
     @Override
@@ -39,7 +53,7 @@ public class SummaryListAdapter extends BaseAdapter {
         } else row_view = view;
 
         //
-        Person p = PersonDB.getInstance().getPersonList().get(i);
+        Person p = mPersonList.get(i);
         //
         ((TextView) row_view.findViewById(R.id.first_name)).setText(p.getFirstName() + " ");
         ((TextView) row_view.findViewById(R.id.last_name)).setText(p.getLastName());
